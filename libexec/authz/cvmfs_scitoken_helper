@@ -1,0 +1,15 @@
+#!/bin/bash
+if [ -n "$OSG_WN_CLIENT" ]; then
+    source $OSG_WN_CLIENT/setup.sh
+elif [ -n "$OSG_BASE_DIR" ]; then
+    export X509_CERT_DIR=$OSG_BASE_DIR/etc/grid-security/certificates
+    # these two are needed only if have to fall back to x509
+    #  (which the scitoken helper itself might do)
+    export X509_VOMS_DIR=$OSG_BASE_DIR/etc/grid-security/vomsdir
+    export VOMS_USERCONF=$OSG_BASE_DIR/etc/vomses
+fi
+if [ -x /usr/libexec/cvmfs/authz/cvmfs_scitoken_helper ];then
+    exec /usr/libexec/cvmfs/authz/cvmfs_scitoken_helper "$@"
+fi
+# this would be used if cvmfs-x509-helper rpm version is < 2.0
+exec /usr/libexec/cvmfs/authz/cvmfs_x509_helper "$@"
