@@ -1,6 +1,6 @@
 #!/bin/bash
 if [ -n "$OSG_WN_CLIENT" ]; then
-    source $OSG_WN_CLIENT/setup.sh
+    . $OSG_WN_CLIENT/setup.sh
 elif [ -n "$OSG_BASE_DIR" ]; then
     export X509_CERT_DIR=$OSG_BASE_DIR/etc/grid-security/certificates
     # these two are needed only if have to fall back to x509
