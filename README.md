@@ -5,6 +5,9 @@ The different organizations config repositories are tracked in different
 branches:
 
 - master: superset of all configurations, closely resembling egi
-- default: configuration for cvmfs-config-default, the default with cvmfs
-- egi: configuration for egi.eu
-- osg: configuration for opensciencegrid.org
+- default: configuration for cvmfs-config-default, the default with cvmfs,
+    deployed in /cvmfs/cvmfs-config.cern.ch
+- egi: configuration for cvmfs-config-egi
+    deployed in /cvmfs/config-egi.egi.eu
+- osg: configuration for cvmfs-config-osg
+    deployed in /cvmfs/config-osg.opensciencegrid.org
