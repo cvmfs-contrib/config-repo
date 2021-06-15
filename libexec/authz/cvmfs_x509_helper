@@ -6,5 +6,4 @@ elif [ -n "$OSG_BASE_DIR" ]; then
     export X509_VOMS_DIR=$OSG_BASE_DIR/etc/grid-security/vomsdir
     export VOMS_USERCONF=$OSG_BASE_DIR/etc/vomses
 fi
-exec /usr/libexec/cvmfs/authz/cvmfs_x509_helper "$@"
-
+exec $CVMFS_DIST/usr/libexec/cvmfs/authz/cvmfs_x509_helper "$@"
