@@ -9,7 +9,7 @@ elif [ -n "$OSG_BASE_DIR" ]; then
     export VOMS_USERCONF=$OSG_BASE_DIR/etc/vomses
 fi
 if [ -x $CVMFS_DIST/usr/libexec/cvmfs/authz/cvmfs_scitoken_helper ];then
-    $CVMFS_DIST/usr/libexec/cvmfs/authz/cvmfs_scitoken_helper "$@"
+    exec $CVMFS_DIST/usr/libexec/cvmfs/authz/cvmfs_scitoken_helper "$@"
 fi
 # this would be used if cvmfs-x509-helper rpm version is < 2.0
 exec $CVMFS_DIST/usr/libexec/cvmfs/authz/cvmfs_x509_helper "$@"
