@@ -12,6 +12,7 @@ CVMFS_EXTERNAL_URL = "CVMFS_EXTERNAL_URL"
 baseurl = "https://raw.githubusercontent.com/cvmfs-contrib/config-repo/master"
 ligoconf = "etc/cvmfs/config.d/ligo.osgstorage.org.conf"
 osgconf = "etc/cvmfs/domain.d/osgstorage.org.conf"
+whitelist = "checks/whitelist.txt"
 
 namespaces = "https://topology.opensciencegrid.org/stashcache/namespaces.json"
 
@@ -81,10 +82,16 @@ def get_namespaces_map():
     }
 
 
+def get_whitelisted():
+    wl = slurp(whitelist).decode()
+    return set( l for l in wl.splitlines() if not l.startswith("#") )
+
+
 def do_conf_comparisons():
     nsmap = get_namespaces_map()
     osgmap = get_conf_url_path_map(osgconf)
     ligomap = get_conf_url_path_map(ligoconf)
+    whitelisted = get_whitelisted()
 
     osg_cvmfs_caches = osgmap['/']
     osg_topology_caches = nsmap['/osgconnect/public']['endpoint']
@@ -92,21 +99,18 @@ def do_conf_comparisons():
     ligo_cvmfs_caches = ligomap['/user/ligo/']
     ligo_topology_caches = nsmap['/user/ligo']['auth_endpoint']
 
-    osg_cvmfs_extra = osg_cvmfs_caches - osg_topology_caches
-    osg_cvmfs_missing = osg_topology_caches - osg_cvmfs_caches
-
-    print_diffs(osgconf, osg_cvmfs_caches, osg_topology_caches)
-    print_diffs(ligoconf, ligo_cvmfs_caches, ligo_topology_caches)
+    print_diffs(osgconf, osg_cvmfs_caches, osg_topology_caches, whitelisted)
+    print_diffs(ligoconf, ligo_cvmfs_caches, ligo_topology_caches, whitelisted)
 
 
-def print_diffs(conf, cvmfs_caches, topology_caches):
+def print_diffs(conf, cvmfs_caches, topology_caches, whitelisted):
     conf = os.path.basename(conf)
     if cvmfs_caches == topology_caches:
         print("%s is up to date with topology source" % conf)
         print("")
     else:
         cvmfs_missing = topology_caches - cvmfs_caches
-        cvmfs_extra   = cvmfs_caches    - topology_caches
+        cvmfs_extra   = cvmfs_caches    - topology_caches - whitelisted
 
         if cvmfs_missing:
             print("Missing items from %s (to add)" % conf)
