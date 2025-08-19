@@ -1,0 +1,32 @@
+name: merge
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  apply-corrections:
+    uses: ./.github/workflows/apply-corrections.yml
+    with:
+      upload-db: true
+    secrets: inherit
+
+  release-db:
+    needs:
+      - apply-corrections
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: iplocation
+
+      - name: Upload them to the geoipdb release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload geoipdb iplocation.mmdb.gz --clobber
+          gh release upload geoipdb corrections.json --clobber

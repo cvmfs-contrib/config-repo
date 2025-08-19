@@ -1,0 +1,19 @@
+name: ci
+on:
+  pull_request:
+
+jobs:
+  check_server_cities:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make sure server-cities.csv is up to date
+        run: |
+          set -e
+          geoipdb/make-server-cities >geoipdb/server-cities-new.csv
+          diff -u geoipdb/server-cities.csv geoipdb/server-cities-new.csv
+
+  check_corrections:
+    uses: ./.github/workflows/apply-corrections.yml 
+    secrets: inherit
