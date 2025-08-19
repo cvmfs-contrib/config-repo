@@ -1,0 +1,31 @@
+name: cron
+on:
+  schedule: 
+    # documentation says to avoid busy times such as the top of each hour
+    - cron: '33 3 2 * *' # 3:33 am UTC, 2nd day of the month
+  workflow_dispatch:
+
+jobs:
+  update_base:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch new base
+        run: |
+          curl -s --fail-with-body -o iplocation-base.mmdb.gz https://download.db-ip.com/free/dbip-city-lite-$(date +%Y-%m).mmdb.gz
+
+      - name: Upload it to the geoipdb release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload geoipdb iplocation-base.mmdb.gz --clobber
+
+  update_db:
+    needs:
+      - update_base
+    uses: ./.github/workflows/apply-corrections.yml 
+    with:
+      upload-db: true
+      release-db: true
+    secrets: inherit

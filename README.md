@@ -1,7 +1,7 @@
 # config-repo
 Master source for CVMFS configuration repository for major organizations.
 
-The different organizations config repositories are tracked in different
+The different organizations' config repositories are tracked in different
 branches:
 
 - master: superset of all configurations, closely resembling egi
@@ -11,3 +11,6 @@ branches:
     - source of config repo /cvmfs/config-egi.egi.eu
 - osg: configuration for cvmfs-config-osg
     - source of config repo /cvmfs/config-osg.opensciencegrid.org
+
+The master branch also contains [code](geoipdb/README.md) to manage
+generation of the geoIP database used by CVMFS stratum 1s.
