@@ -1,0 +1,113 @@
+on:
+  workflow_call:
+    inputs:
+      upload-db:
+        description: Whether or not to upload db artifact
+        required: false
+        default: false
+        type: boolean
+      release-db:
+        description: Whether or not to release corrections and db
+        required: false
+        default: false
+        type: boolean
+      skip-unchanged:
+        description: Whether to skip making db when there were no changes
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  apply_corrections:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch corrections.json
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd geoipdb
+          gh release download geoipdb -p corrections.json
+
+      - name: Make new corrections.json
+        id: corrections
+        env:
+          SKIP_UNCHANGED: ${{ inputs.skip-unchanged }}
+        run: |
+          set -e
+          cd geoipdb
+          ./make-corrections >corrections-new.json
+          if ! diff -u corrections.json corrections-new.json; then
+            mv corrections-new.json corrections.json
+            SKIP_UNCHANGED=false
+          fi
+          echo "SKIP_UNCHANGED=$SKIP_UNCHANGED" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch deps
+        if: steps.corrections.outputs.SKIP_UNCHANGED == 'false'
+        run: |
+          set -e
+          sudo apt-get -q update
+          sudo apt-get install -y make
+
+      - name: Setup Go
+        if: steps.corrections.outputs.SKIP_UNCHANGED == 'false'
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.24.6
+
+      - name: Build mmdb-editor
+        if: steps.corrections.outputs.SKIP_UNCHANGED == 'false'
+        run: |
+          set -e
+          git clone https://github.com/iglov/mmdb-editor.git
+          cd mmdb-editor
+          make linux-amd64
+          cd ..
+
+      - name: Fetch base db
+        if: steps.corrections.outputs.SKIP_UNCHANGED == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          cd geoipdb
+          gh release download geoipdb -p iplocation-base.mmdb.gz
+          gunzip iplocation-base.mmdb.gz
+
+      - name: Apply corrections
+        if: steps.corrections.outputs.SKIP_UNCHANGED == 'false'
+        run: |
+          set -e
+          cd geoipdb
+          ../mmdb-editor/bin/mmdb-editor* -d corrections.json -i iplocation-base.mmdb -o iplocation.mmdb
+          gzip iplocation.mmdb
+
+      # This is for debugging
+      - name: Upload corrections artifact
+        if: ${{ !inputs.upload-db && steps.corrections.outputs.SKIP_UNCHANGED == 'false' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: corrections
+          path: |
+            geoipdb/corrections.json
+
+      # This is for maintaining a copy for the 90 day retention period
+      - name: Upload corrections and db artifacts
+        if: ${{ inputs.upload-db && steps.corrections.outputs.SKIP_UNCHANGED == 'false' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: iplocation
+          path: |
+            geoipdb/corrections.json
+            geoipdb/iplocation.mmdb.gz
+
+      - name: Upload corrections and db to the geoipdb release
+        if: ${{ inputs.release-db && steps.corrections.outputs.SKIP_UNCHANGED == 'false' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd geoipdb
+          gh release upload geoipdb iplocation.mmdb.gz --clobber
+          gh release upload geoipdb corrections.json --clobber

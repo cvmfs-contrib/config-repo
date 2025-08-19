@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+
+import json
+import os
+import socket
+import sys
+
+def get_networks(hostname):
+    nets = set()
+
+    try:
+        info = socket.getaddrinfo(hostname, 0, 0, socket.IPPROTO_TCP)
+    except:
+        return []
+
+    for tuple in info:
+        if (tuple[0] == socket.AF_INET):
+            nets.add(tuple[4][0] + '/32')
+        elif (tuple[0] == socket.AF_INET6):
+            nets.add(tuple[4][0] + '/128')
+    networks = list(nets)
+    networks.sort()
+    return networks
+
+
+def main():
+
+    dir = os.path.dirname(sys.argv[0])
+
+    locations = {}
+    with open(dir + '/location-cities.csv', 'r', encoding='utf-8') as file:
+        for line in file:
+            fields = line.strip().split(',')
+            loc = ','.join(fields[0:2])
+            # make entries based on fields 2 to 3 and 2 to 4 (if field 4 present)
+            idx = ','.join(fields[2:4])
+            locations[idx] = loc
+            if len(fields) > 4:
+                idx += ',' + fields[4]
+                locations[idx] = loc
+
+    oldnetworks = {}
+
+    try:
+        with open(dir + '/corrections.json', 'r', encoding='utf-8') as file:
+            for entry in json.load(file):
+                oldnetworks[entry['name']] = entry['networks']
+    except Exception as e:
+        print("Error with old corrections.json, skipping: " + str(e))
+
+    corrections = []
+    with open(dir + '/server-cities.csv', 'r', encoding='utf-8') as file:
+        for line in file:
+            fields = line.strip().split(',', 1)
+            if len(fields) != 2:
+                print("Error: no location supplied for " + fields[0])
+                sys.exit(1)
+            if fields[1] not in locations:
+                print("Error: " + fields[1] + " not found in location-cities.csv", file=sys.stderr)
+                sys.exit(2)
+            networks = get_networks(fields[0])
+            if len(networks) == 0:
+                print("Warning: " + fields[0] + " not found in dns", file=sys.stderr)
+                if fields[0] not in oldnetworks:
+                    continue
+                print("Using networks from corrections.json instead", file=sys.stderr)
+                networks = oldnetworks[fields[0]]
+            loc = locations[fields[1]]
+            latlong = loc.split(',')
+            corrections.append({
+                'name': fields[0],
+                'networks': networks,
+                'data': {
+                    'location': {
+                        'latitude': latlong[0],
+                        'longitude': latlong[1]
+                    }
+                }
+            })
+
+    with open(dir + '/exceptions.json', 'r', encoding='utf-8') as file:
+        corrections = corrections + json.load(file)
+
+    json.dump(corrections, sys.stdout, indent=2)
+
+if __name__ == "__main__":
+    main()

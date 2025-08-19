@@ -1,0 +1,26 @@
+#!/bin/bash
+set -eu
+if [ ! -f geoipdb/server-cities.csv ]; then
+    echo "This needs to be run from the top of the git repository." >&2
+    echo "geoipdb/server-cities.csv not found!" >&2
+    exit 1
+fi
+export LANG=c_US.UTF-8
+declare -A servers
+SAVIFS="$IFS"
+IFS=","
+while read SERVER CITY; do
+    servers[$SERVER]="$CITY"
+done <geoipdb/server-cities.csv
+IFS="$SAVIFS"
+
+find etc -type f |xargs egrep "(SERVER|EXTERNAL)_URL"|sed 's/.*SERVER_URL=//' |\
+    tr ';' '\n'|sed -n 's,.*http://,,p'|sed 's,[:/].*,,'|sort -u|\
+    grep -v openhtc.io|grep -v computecanada.net | while read SERVER; do
+    CITY="${servers[$SERVER]:-}"
+    if [ -n "$CITY" ]; then
+        echo "$SERVER,$CITY"
+    else
+        echo "$SERVER"
+    fi
+done
