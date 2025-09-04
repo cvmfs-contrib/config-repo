@@ -3,7 +3,7 @@ name: Mirror Repo to codeberg
 on:
   push:
     branches:
-      - main
+      - master
       - default
       - egi
       - osg
