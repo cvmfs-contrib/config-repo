@@ -7,6 +7,7 @@ on:
 
 jobs:
   upload:
+    if: github.repository == 'cvmfs-contrib/config-repo'
     uses: ./.github/workflows/apply-corrections.yml
     with:
       skip-unchanged: true
