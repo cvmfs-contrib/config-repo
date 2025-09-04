@@ -72,8 +72,8 @@ def main():
                 'networks': networks,
                 'data': {
                     'location': {
-                        'latitude': latlong[0],
-                        'longitude': latlong[1]
+                        'latitude': float(latlong[0]),
+                        'longitude': float(latlong[1])
                     }
                 }
             })
