@@ -111,3 +111,15 @@ jobs:
           cd geoipdb
           gh release upload geoipdb iplocation.mmdb.gz --clobber
           gh release upload geoipdb corrections.json --clobber
+
+      - name: Upload corrections and db to the Codeberg geoipdb release
+        if: ${{ inputs.release-db && steps.corrections.outputs.SKIP_UNCHANGED == 'false' }}
+        run: |
+          cd geoipdb
+          set -ex
+          for FILE in iplocation.mmdb.gz corrections.json; do \
+            curl -sSL -m 300 -X POST \
+              -H "Authorization: token ${{ secrets.CODEBERG_GIT_REPOWRITE_TOKEN }}" \
+              -F "attachment=@$FILE" \
+              "https://codeberg.org/api/v1/repos/cvmfs-contrib/config-repo/releases/geoipdb/assets"; \
+          done
