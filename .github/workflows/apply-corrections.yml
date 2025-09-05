@@ -114,20 +114,9 @@ jobs:
 
       - name: Upload corrections and db to the Codeberg geoipdb release
         if: ${{ inputs.release-db && steps.corrections.outputs.SKIP_UNCHANGED == 'false' }}
+        env:
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_GIT_REPOWRITE_TOKEN }}
         run: |
           sudo apt-get install -y jq
           cd geoipdb
-          set -ex
-          curlauth() {
-            curl -sSL -m 300 -H "Authorization: token ${{ secrets.CODEBERG_GIT_REPOWRITE_TOKEN }}" "$@" | tee ans
-          }
-          RELAPI="https://codeberg.org/api/v1/repos/cvmfs-contrib/config-repo/releases"
-          TAGID="$(curlauth $RELAPI | jq '.[] | select(.name=="geoipdb").id')"
-          if [ -z "$TAGID" ]; then cat ans; exit 1; fi
-          ASSETAPI="$RELAPI/$TAGID/assets"
-          for FILE in iplocation.mmdb.gz corrections.json; do
-            ASSETID="$(curlauth $ASSETAPI | jq '.[] | select(.name=="'$FILE'").id')"
-            if [ -z "$ASSETID" ]; then cat ans; exit 1; fi
-            curlauth -X POST -F "attachment=@$FILE" $ASSETAPI/$ASSETID
-          done
-          rm -f ans
+          ./codeberg-release-upload cvmfs-contrib/config-repo geoipdb corrections.json iplocation.mmdb.gz

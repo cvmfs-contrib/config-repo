@@ -13,13 +13,20 @@ jobs:
 
       - name: Fetch new base
         run: |
-          curl -s --fail-with-body -o iplocation-base.mmdb.gz https://download.db-ip.com/free/dbip-city-lite-$(date +%Y-%m).mmdb.gz
+          curl -sSL --fail-with-body -o iplocation-base.mmdb.gz https://download.db-ip.com/free/dbip-city-lite-$(date +%Y-%m).mmdb.gz
 
-      - name: Upload it to the geoipdb release
+      - name: Upload it to the github geoipdb release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release upload geoipdb iplocation-base.mmdb.gz --clobber
+
+      - name: Upload it to the codeberg geoipdb release
+        env:
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_GIT_REPOWRITE_TOKEN }}
+        run: |
+          sudo apt-get install -y jq
+          geoipdb/codeberg-release-upload cvmfs-contrib/config-repo geoipdb iplocation-base.mmdb.gz
 
   update_db:
     needs:
