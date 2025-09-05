@@ -1,0 +1,43 @@
+#!/bin/bash
+# Use the codeberg release api to upload release asset(s)
+# The berg cli doesn't yet support that although there's a partial PR
+#   https://codeberg.org/Aviac/codeberg-cli/pulls/223
+
+if [ $# -lt 3 ]; then
+  echo "Usage: $0 org/repo tag release_asset ..." >&2
+  exit 1
+fi
+
+if [ -z "$CODEBERG_TOKEN" ]; then
+  echo '$CODEBERG_TOKEN not set' >&2
+  exit 1
+fi
+
+curlauth() {
+  curl -sSL -m 300 -H "Authorization: token $CODEBERG_TOKEN" "$@"
+}
+
+getid() {
+  local ANS="$(curlauth "$1")"
+  local ID="$(echo "$ANS" | jq '.[] | select(.name=="'$2'").id')"
+  if [ -z "$ID" ]; then
+    echo "Could not locate id of $2"
+    echo "URL was $1"
+    echo "Response was:"
+    echo "$ANS"
+    exit 1
+  fi >&2
+  echo "$ID"
+}
+
+set -e
+RELAPI="https://codeberg.org/api/v1/repos/$1/releases"
+TAGID="$(getid $RELAPI $2)"
+shift 2
+
+ASSETAPI="$RELAPI/$TAGID/assets"
+for FILE in $*; do
+  ASSETID="$(getid $ASSETAPI $FILE)"
+  curlauth --fail-with-body -X DELETE $ASSETAPI/$ASSETID
+  curlauth --fail-with-body -X POST -F "attachment=@$FILE" $ASSETAPI
+done
