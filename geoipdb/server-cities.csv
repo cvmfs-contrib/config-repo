@@ -7,7 +7,6 @@ ccstashcacheli01.in2p3.fr,FR,Villeurbanne
 cf-ac-uk-cache.nationalresearchplatform.org,GB,Caerdydd,Cardiff
 cvmfs-brisbane.neurodesk.org,AU,Brisbane,Queensland
 cvmfs-egi.gridpp.rl.ac.uk,GB,Didcot,Oxfordshire
-cvmfs-ext.gridpp.rl.ac.uk,GB,Didcot,Oxfordshire
 cvmfs-melbourne.neurodesk.org,AU,Melbourne,Victoria
 cvmfs-perth.neurodesk.org,AU,Perth
 cvmfs-s1-arbutus.computecanada.ca,CA,Victoria,British Columbia
@@ -46,6 +45,7 @@ osg-houston-stashcache.nrp.internet2.edu,US,Houston,Texas
 osg-new-york-stashcache.nrp.internet2.edu,US,New York,New York
 osg-stash-sfu-computecanada-ca.nationalresearchplatform.org,CA,Burnaby,British Columbia
 osg-sunnyvale-stashcache.nrp.internet2.edu,US,Sunnyvale,California
+ral-uk-s1.eessi.science,GB,Didcot,Oxfordshire
 sampacs01.if.usp.br,BR,Sao Paulo
 sdsc-cache.nationalresearchplatform.org,US,San Diego,California
 singapore.nationalresearchplatform.org,SG,Singapore
