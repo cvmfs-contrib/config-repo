@@ -2,6 +2,7 @@
 # Use the codeberg release api to upload release asset(s)
 # The berg cli doesn't yet support that although there's a partial PR
 #   https://codeberg.org/Aviac/codeberg-cli/pulls/223
+# Uses curl and jq
 
 if [ $# -lt 3 ]; then
   echo "Usage: $0 org/repo tag release_asset ..." >&2
@@ -37,7 +38,8 @@ shift 2
 
 ASSETAPI="$RELAPI/$TAGID/assets"
 for FILE in $*; do
-  ASSETID="$(getid $ASSETAPI $FILE)"
-  curlauth --fail-with-body -X DELETE $ASSETAPI/$ASSETID
+  if ASSETID="$(getid $ASSETAPI $FILE)"; then
+    curlauth --fail-with-body -X DELETE $ASSETAPI/$ASSETID
+  fi
   curlauth --fail-with-body -X POST -F "attachment=@$FILE" $ASSETAPI
 done
