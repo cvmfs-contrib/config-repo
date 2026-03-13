@@ -1,0 +1,13 @@
+#!/bin/bash
+# This only needs to be run very occasionally by hand, when new cities
+# are needed, because cities are not expected to move.
+
+set -eu
+DIR="$(dirname $0)"
+
+if [ ! $DIR/worldcities.csv ]; then
+    echo "Download Basic from https://simplemaps.com/data/world-cities to $DIR/worldcities.csv" >&2
+    exit 1
+fi
+
+awk '{split($0,a,"\"");print a[6] "," a[8] "," a[12] "," a[4] "," a[16]}' $DIR/worldcities.csv | cut -d, -f1-5
